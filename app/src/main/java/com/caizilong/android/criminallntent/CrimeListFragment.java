@@ -1,5 +1,6 @@
 package com.caizilong.android.criminallntent;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -8,6 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -24,7 +26,7 @@ public class CrimeListFragment extends Fragment {
 
     private RecyclerView mCrimeRecyclerView;
     private CrimeAdapter mAdapter;
-
+    private static final int REQUEST_CRIME = 1;
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -45,12 +47,31 @@ public class CrimeListFragment extends Fragment {
 
         List<Crime> crimes = crimeLab.getCrimes();
 
-        mAdapter = new CrimeAdapter(crimes);
+        if (mAdapter == null){
+            mAdapter = new CrimeAdapter(crimes);
+            mCrimeRecyclerView.setAdapter(mAdapter);
 
-        mCrimeRecyclerView.setAdapter(mAdapter);
-
+        }else {
+            mAdapter.notifyDataSetChanged();
+        }
 
     }
+
+    private void updateUI(int position){
+        CrimeLab crimeLab = CrimeLab.get(getActivity());
+
+        List<Crime> crimes = crimeLab.getCrimes();
+
+        if (mAdapter == null){
+            mAdapter = new CrimeAdapter(crimes);
+            mCrimeRecyclerView.setAdapter(mAdapter);
+
+        }else {
+            mAdapter.notifyItemChanged(position);
+        }
+
+    }
+
 
     private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener{
 
@@ -80,9 +101,24 @@ public class CrimeListFragment extends Fragment {
         }
 
 
+
+
+
         @Override
         public void onClick(View view) {
-            Toast.makeText(getActivity(), mCrime.getTitle() + "clicked", Toast.LENGTH_SHORT).show();
+
+            int position = (int)view.getTag();
+
+//            Intent intent = CrimeActivity.newIntent(getActivity(), mCrime.getId(), position);
+//            startActivity(intent);
+
+            Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId());
+
+            startActivity(intent);
+
+//            startActivityForResult(intent, REQUEST_CRIME);
+
+//            Toast.makeText(getActivity(), mCrime.getTitle() + "clicked", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -106,6 +142,7 @@ public class CrimeListFragment extends Fragment {
         @Override
         public void onBindViewHolder(CrimeHolder holder, int position) {
 
+            holder.itemView.setTag(position);
             holder.bind(mCrimes.get(position));
 
         }
@@ -117,4 +154,25 @@ public class CrimeListFragment extends Fragment {
     }
 
 
+//    @Override
+//    public void onResume() {
+//        super.onResume();
+//
+//        updateUI();
+//
+//    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CRIME){
+
+            int position = data.getIntExtra(CrimeActivity.EXTRA_CRIME_POSITION, 0);
+
+            updateUI(position);
+
+        }
+
+    }
 }
